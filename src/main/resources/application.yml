@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: supermarket-pos-sales-api
+  
+  profiles:
+    active: dev
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
+# Application-specific configuration
+app:
+  tax:
+    rate: 0.19  # 19% default tax rate
+  
+  frozen-sale:
+    expiration-hours: 2  # Default 2 hours
+  
+  store:
+    name: "SuperMarket POS"
+
+# External API Configuration
+external-api:
+  product:
+    base-url: ${PRODUCT_API_URL:http://localhost:8081}
+  customer:
+    base-url: ${CUSTOMER_API_URL:http://localhost:8082}
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        minimumNumberOfCalls: 5
+    instances:
+      productApi:
+        baseConfig: default
+      customerApi:
+        baseConfig: default
+  
+  retry:
+    configs:
+      default:
+        maxAttempts: 3
+        waitDuration: 100ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+    instances:
+      productApi:
+        baseConfig: default
+      customerApi:
+        baseConfig: default
+  
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 10s
+    instances:
+      productApi:
+        baseConfig: default
+      customerApi:
+        baseConfig: default
+
+# Management/Actuator endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging
+logging:
+  level:
+    com.supermarket.pos: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
